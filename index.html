@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ResumeIQ — AI Resume Analyzer</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --border: #2a2a3a;
+    --accent: #7c5cfc;
+    --accent2: #a78bfa;
+    --green: #34d399;
+    --yellow: #fbbf24;
+    --red: #f87171;
+    --text: #e8e8f0;
+    --muted: #7a7a9a;
+    --font-display: 'Space Grotesk', sans-serif;
+    --font-body: 'Inter', sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* NAV */
+  nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 2rem;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: rgba(10,10,15,0.85);
+    backdrop-filter: blur(12px);
+    z-index: 100;
+  }
+  .logo {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.03em;
+  }
+  .logo span { color: var(--accent2); }
+  .nav-badge {
+    font-size: 0.72rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 99px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+
+  /* HERO */
+  .hero {
+    text-align: center;
+    padding: 5rem 1.5rem 3rem;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+  .hero-eyebrow {
+    display: inline-block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    margin-bottom: 1.25rem;
+    border: 1px solid rgba(124,92,252,0.3);
+    padding: 0.3rem 1rem;
+    border-radius: 99px;
+    background: rgba(124,92,252,0.08);
+  }
+  .hero h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2.2rem, 6vw, 3.4rem);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.04em;
+    color: var(--text);
+    margin-bottom: 1rem;
+  }
+  .hero h1 em {
+    font-style: normal;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero p {
+    color: var(--muted);
+    font-size: 1.05rem;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  /* MAIN CARD */
+  .main-card {
+    max-width: 860px;
+    margin: 0 auto 4rem;
+    padding: 0 1.5rem;
+  }
+
+  /* API KEY INPUT */
+  .api-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .api-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .api-input-wrap {
+    flex: 1;
+    min-width: 200px;
+    position: relative;
+  }
+  .api-input-wrap input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.65rem 1rem;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .api-input-wrap input:focus { border-color: var(--accent); }
+  .api-hint {
+    font-size: 0.78rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .api-hint a { color: var(--accent2); text-decoration: none; }
+  .api-hint a:hover { text-decoration: underline; }
+
+  /* TEXTAREA GRID */
+  .input-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  @media (max-width: 640px) { .input-grid { grid-template-columns: 1fr; } }
+
+  .input-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    transition: border-color 0.2s;
+  }
+  .input-block:focus-within { border-color: rgba(124,92,252,0.5); }
+
+  .input-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .input-icon {
+    width: 28px; height: 28px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 8px;
+    display: grid;
+    place-items: center;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+  .input-label {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text);
+  }
+  .input-sublabel {
+    font-size: 0.75rem;
+    color: var(--muted);
+    margin-left: auto;
+  }
+
+  textarea {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    line-height: 1.6;
+    resize: vertical;
+    min-height: 220px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  textarea::placeholder { color: var(--muted); }
+  textarea:focus { border-color: var(--accent); }
+
+  /* ANALYZE BUTTON */
+  .cta-row {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+  }
+  .analyze-btn {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 0.9rem 2.5rem;
+    font-family: var(--font-display);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    letter-spacing: -0.01em;
+  }
+  .analyze-btn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
+  .analyze-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ERROR */
+  .error-box {
+    background: rgba(248,113,113,0.1);
+    border: 1px solid rgba(248,113,113,0.3);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    color: var(--red);
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+    display: none;
+  }
+
+  /* RESULTS */
+  .results {
+    display: none;
+    flex-direction: column;
+    gap: 1.25rem;
+    animation: fadeUp 0.4s ease;
+  }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+  .result-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 0.25rem;
+  }
+  .result-header h2 {
+    font-family: var(--font-display);
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+  }
+
+  /* SCORE RING */
+  .score-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    padding: 0.5rem 1rem 0.5rem 0.5rem;
+  }
+  .score-ring {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: white;
+  }
+  .score-ring.green { background: radial-gradient(circle, var(--green), #059669); }
+  .score-ring.yellow { background: radial-gradient(circle, var(--yellow), #d97706); }
+  .score-ring.red { background: radial-gradient(circle, var(--red), #dc2626); }
+  .score-label { font-size: 0.8rem; color: var(--muted); }
+  .score-value { font-family: var(--font-display); font-weight: 600; font-size: 0.95rem; }
+
+  /* RESULT CARDS */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+  @media (max-width: 580px) { .cards-grid { grid-template-columns: 1fr; } }
+
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.25rem;
+  }
+  .result-card.full { grid-column: 1 / -1; }
+
+  .card-title {
+    font-family: var(--font-display);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .card-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .dot-green { background: var(--green); }
+  .dot-yellow { background: var(--yellow); }
+  .dot-red { background: var(--red); }
+  .dot-purple { background: var(--accent2); }
+
+  .result-text {
+    font-size: 0.9rem;
+    color: #c0c0d8;
+    line-height: 1.7;
+    white-space: pre-wrap;
+  }
+  .tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+  .tag {
+    font-size: 0.78rem;
+    padding: 0.28rem 0.7rem;
+    border-radius: 99px;
+    font-weight: 500;
+  }
+  .tag.present { background: rgba(52,211,153,0.15); color: var(--green); border: 1px solid rgba(52,211,153,0.3); }
+  .tag.missing { background: rgba(248,113,113,0.12); color: var(--red); border: 1px solid rgba(248,113,113,0.25); }
+
+  /* COPY BUTTON */
+  .copy-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.4rem 0.9rem;
+    color: var(--muted);
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+    margin-top: 0.75rem;
+    display: inline-block;
+  }
+  .copy-btn:hover { color: var(--text); border-color: var(--accent2); }
+
+  /* FOOTER */
+  footer {
+    text-align: center;
+    padding: 2.5rem 1rem;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.8rem;
+  }
+  footer a { color: var(--accent2); text-decoration: none; }
+
+  /* SKELETON */
+  .skeleton {
+    background: linear-gradient(90deg, var(--surface) 25%, var(--surface2) 50%, var(--surface) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+    border-radius: 8px;
+    height: 14px;
+    margin-bottom: 8px;
+  }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Resume<span>IQ</span></div>
+  <div class="nav-badge">AI-Powered · Free</div>
+</nav>
+
+<div class="hero">
+  <div class="hero-eyebrow">Built with Claude AI</div>
+  <h1>Get your resume <em>actually noticed</em></h1>
+  <p>Paste your resume and job description. Get instant AI feedback on ATS score, missing keywords, and what to fix.</p>
+</div>
+
+<div class="main-card">
+
+  <!-- API KEY -->
+  <div class="api-section">
+    <div class="api-label">🔑 API Key</div>
+    <div class="api-input-wrap">
+      <input type="password" id="apiKey" placeholder="sk-ant-api03-..." autocomplete="off"/>
+    </div>
+    <div class="api-hint">Get yours free at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a></div>
+  </div>
+
+  <!-- INPUTS -->
+  <div class="input-grid">
+    <div class="input-block">
+      <div class="input-header">
+        <div class="input-icon">📄</div>
+        <div class="input-label">Your Resume</div>
+        <div class="input-sublabel">Paste as plain text</div>
+      </div>
+      <textarea id="resumeText" placeholder="Paste your full resume here...
+
+Name, contact info
+Summary...
+Experience...
+Skills...
+Education..."></textarea>
+    </div>
+    <div class="input-block">
+      <div class="input-header">
+        <div class="input-icon">💼</div>
+        <div class="input-label">Job Description</div>
+        <div class="input-sublabel">The role you're targeting</div>
+      </div>
+      <textarea id="jobDesc" placeholder="Paste the job description here...
+
+Company, role title...
+Responsibilities...
+Requirements...
+Preferred qualifications..."></textarea>
+    </div>
+  </div>
+
+  <div class="cta-row">
+    <button class="analyze-btn" id="analyzeBtn" onclick="analyze()">
+      <div class="spinner" id="spinner"></div>
+      <span id="btnText">⚡ Analyze My Resume</span>
+    </button>
+  </div>
+
+  <div class="error-box" id="errorBox"></div>
+
+  <!-- RESULTS -->
+  <div class="results" id="results">
+    <div class="result-header">
+      <h2>Analysis Report</h2>
+      <div class="score-pill">
+        <div class="score-ring" id="scoreRing">—</div>
+        <div>
+          <div class="score-label">ATS Match Score</div>
+          <div class="score-value" id="scoreLabel">Analyzing...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cards-grid">
+      <div class="result-card">
+        <div class="card-title"><span class="card-dot dot-green"></span> Strengths</div>
+        <div class="result-text" id="strengths">
+          <div class="skeleton" style="width:90%"></div>
+          <div class="skeleton" style="width:75%"></div>
+          <div class="skeleton" style="width:85%"></div>
+        </div>
+      </div>
+      <div class="result-card">
+        <div class="card-title"><span class="card-dot dot-red"></span> Gaps & Weaknesses</div>
+        <div class="result-text" id="gaps">
+          <div class="skeleton" style="width:80%"></div>
+          <div class="skeleton" style="width:90%"></div>
+          <div class="skeleton" style="width:70%"></div>
+        </div>
+      </div>
+      <div class="result-card full">
+        <div class="card-title"><span class="card-dot dot-purple"></span> Keywords</div>
+        <div id="keywords">
+          <div class="skeleton" style="width:60%"></div>
+        </div>
+      </div>
+      <div class="result-card full">
+        <div class="card-title"><span class="card-dot dot-yellow"></span> Rewrite Suggestions</div>
+        <div class="result-text" id="suggestions">
+          <div class="skeleton" style="width:95%"></div>
+          <div class="skeleton" style="width:80%"></div>
+          <div class="skeleton" style="width:88%"></div>
+        </div>
+        <button class="copy-btn" onclick="copyReport()">📋 Copy full report</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  <p>ResumeIQ uses the <a href="https://anthropic.com" target="_blank">Claude AI</a> API. Your data never leaves your browser session.</p>
+  <p style="margin-top:0.4rem;">Built with ❤️ using HTML, CSS & JS · Open source on GitHub</p>
+</footer>
+
+<script>
+let lastReport = '';
+
+async function analyze() {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  const resume = document.getElementById('resumeText').value.trim();
+  const job = document.getElementById('jobDesc').value.trim();
+  const errorBox = document.getElementById('errorBox');
+  
+  errorBox.style.display = 'none';
+
+  if (!apiKey) return showError('Please enter your Anthropic API key above.');
+  if (!resume) return showError('Please paste your resume text.');
+  if (!job) return showError('Please paste the job description.');
+
+  setLoading(true);
+  document.getElementById('results').style.display = 'flex';
+
+  const prompt = `You are an expert ATS (Applicant Tracking System) and career coach. Analyze the resume against the job description.
+
+RESUME:
+${resume}
+
+JOB DESCRIPTION:
+${job}
+
+Respond ONLY in this exact JSON format (no markdown, no extra text):
+{
+  "score": <number 0-100>,
+  "strengths": "<3-4 bullet points of what the resume does well, use • as bullet>",
+  "gaps": "<3-4 bullet points of missing skills or weaknesses, use • as bullet>",
+  "keywords_present": ["keyword1","keyword2","keyword3"],
+  "keywords_missing": ["keyword1","keyword2","keyword3"],
+  "suggestions": "<3-4 specific actionable rewrite suggestions with examples, use • as bullet>"
+}`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error?.message || `API error ${res.status}`);
+    }
+
+    const data = await res.json();
+    const raw = data.content[0].text.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(raw);
+    renderResults(parsed);
+    lastReport = formatReport(parsed);
+  } catch (e) {
+    document.getElementById('results').style.display = 'none';
+    showError('Error: ' + e.message);
+  } finally {
+    setLoading(false);
+  }
+}
+
+function renderResults(d) {
+  // Score
+  const ring = document.getElementById('scoreRing');
+  const label = document.getElementById('scoreLabel');
+  ring.textContent = d.score;
+  label.textContent = d.score >= 75 ? 'Strong Match' : d.score >= 50 ? 'Moderate Match' : 'Weak Match';
+  ring.className = 'score-ring ' + (d.score >= 75 ? 'green' : d.score >= 50 ? 'yellow' : 'red');
+
+  // Text fields
+  document.getElementById('strengths').textContent = d.strengths;
+  document.getElementById('gaps').textContent = d.gaps;
+  document.getElementById('suggestions').textContent = d.suggestions;
+
+  // Keywords
+  const kw = document.getElementById('keywords');
+  kw.innerHTML = '';
+
+  if (d.keywords_present?.length) {
+    const presentWrap = document.createElement('div');
+    presentWrap.style.marginBottom = '0.5rem';
+    presentWrap.innerHTML = '<div style="font-size:0.75rem;color:var(--muted);margin-bottom:0.4rem;">✅ Present in your resume</div>';
+    const list = document.createElement('div');
+    list.className = 'tag-list';
+    d.keywords_present.forEach(k => {
+      const t = document.createElement('span');
+      t.className = 'tag present';
+      t.textContent = k;
+      list.appendChild(t);
+    });
+    presentWrap.appendChild(list);
+    kw.appendChild(presentWrap);
+  }
+
+  if (d.keywords_missing?.length) {
+    const missingWrap = document.createElement('div');
+    missingWrap.innerHTML = '<div style="font-size:0.75rem;color:var(--muted);margin-bottom:0.4rem;margin-top:0.75rem;">❌ Missing — add these</div>';
+    const list = document.createElement('div');
+    list.className = 'tag-list';
+    d.keywords_missing.forEach(k => {
+      const t = document.createElement('span');
+      t.className = 'tag missing';
+      t.textContent = k;
+      list.appendChild(t);
+    });
+    missingWrap.appendChild(list);
+    kw.appendChild(missingWrap);
+  }
+}
+
+function formatReport(d) {
+  return `ResumeIQ Analysis Report
+========================
+ATS Score: ${d.score}/100
+
+STRENGTHS
+${d.strengths}
+
+GAPS & WEAKNESSES
+${d.gaps}
+
+KEYWORDS PRESENT: ${(d.keywords_present||[]).join(', ')}
+KEYWORDS MISSING: ${(d.keywords_missing||[]).join(', ')}
+
+SUGGESTIONS
+${d.suggestions}`;
+}
+
+function copyReport() {
+  if (!lastReport) return;
+  navigator.clipboard.writeText(lastReport).then(() => {
+    const btn = document.querySelector('.copy-btn');
+    btn.textContent = '✅ Copied!';
+    setTimeout(() => btn.textContent = '📋 Copy full report', 2000);
+  });
+}
+
+function setLoading(on) {
+  const btn = document.getElementById('analyzeBtn');
+  const spinner = document.getElementById('spinner');
+  const txt = document.getElementById('btnText');
+  btn.disabled = on;
+  spinner.style.display = on ? 'block' : 'none';
+  txt.textContent = on ? 'Analyzing...' : '⚡ Analyze My Resume';
+}
+
+function showError(msg) {
+  const box = document.getElementById('errorBox');
+  box.textContent = msg;
+  box.style.display = 'block';
+}
+
+// Allow Enter key in API field to trigger analysis
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('apiKey').addEventListener('keydown', e => {
+    if (e.key === 'Enter') analyze();
+  });
+});
+</script>
+</body>
+</html>
